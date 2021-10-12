@@ -13,15 +13,10 @@ import (
 
 var sizesSlice []int
 
-func uploadVideoFile(w http.ResponseWriter, r *http.Request) {
+/* func uploadVideoFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Video Upload Endpoint Hit")
-
-	// Parse our multipart form, 10 << 20 specifies a maximum
-	// upload of 10 MB files.
 	r.ParseMultipartForm(10 << 20)
-	// FormFile returns the first file for the given key `myFile`
-	// it also returns the FileHeader so we can get the Filename,
-	// the Header and the size of the file
+
 	file, handler, err := r.FormFile("myFile")
 	if err != nil {
 		fmt.Println("Error Retrieving the File")
@@ -85,10 +80,63 @@ func endedUpload(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(string(stdout))
 
 	fmt.Fprintf(w, "Successfully Uploaded File\n")
-}
+} */
 
 type Client struct {
-	Name string
+	Name    string
+	Frame   string
+	VideoId string
+}
+
+var client Client
+
+func uploadVideoFile(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Video Upload Endpoint Hit")
+	r.ParseMultipartForm(10 << 20)
+
+	jsonDataToBeParsed := r.MultipartForm.Value["data"][0]
+
+	err := json.Unmarshal([]byte(jsonDataToBeParsed), &client)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	file := r.PostFormValue("myFile")
+
+	fmt.Printf("Uploader Name: %+v\n", client.Name)
+	fmt.Printf("File Size: %+v\n", cap([]byte(file)))
+
+	if len(file) > 5 {
+		f, err := os.OpenFile(returnCurPath()+`\video-temp-images\`+client.VideoId+"_"+client.Frame+".jpg", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			fmt.Printf("Unable to create file: %v", err)
+		}
+
+		_, err = f.Write([]byte(file))
+		if err != nil {
+			fmt.Printf("Unable to write file: %v", err)
+		}
+
+		f.Close()
+
+		fmt.Fprintf(w, "Successfully Uploaded Photo\n")
+	} else {
+		fmt.Println("File Not Found.")
+	}
+}
+
+func endedUpload(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Video Ended Endpoint Hit")
+
+	//currentPath := returnCurPath() //Get current path
+	//finalCommand := `ffmpeg -r 4 -start_number 0 -i "` + currentPath + `\video-temp-images\` + client.VideoId + "_" + `%d.jpg" -c:v libx264 -vf "fps=30,format=yuv420p" ` + currentPath + `\final-videos\` + client.VideoId + `_vid.mp4`
+	//fmt.Printf("Final Command is %s\n", finalCommand)
+
+	out := exec.Command(returnCurPath()+"\\converter.bat", client.VideoId).Run()
+
+	fmt.Printf("Out : %s", out)
+
 }
 
 func uploadImageFile(w http.ResponseWriter, r *http.Request) {
@@ -133,7 +181,7 @@ func uploadImageFile(w http.ResponseWriter, r *http.Request) {
 func setupRoutes() {
 	http.HandleFunc("/uploadVideo", uploadVideoFile)
 	http.HandleFunc("/uploadImage", uploadImageFile)
-	http.HandleFunc("/end", endedUpload)
+	http.HandleFunc("/endVideo", endedUpload)
 	http.ListenAndServe(":8080", nil)
 }
 
