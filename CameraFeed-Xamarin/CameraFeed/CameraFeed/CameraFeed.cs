@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
@@ -30,33 +31,66 @@ namespace CameraFeed
         {
             if (Communicator.takePhotoActivated == true)
             {
-                ///TODO HERE WILL BE PHOTO TAKEN
-                var stream = new MemoryStream((byte[])image);
-
-                
-
-                HttpClient client = new HttpClient();
-
-                MultipartFormDataContent content = new MultipartFormDataContent();
-
-                ByteArrayContent baContent = new ByteArrayContent((byte[])image);
-                content.Add(baContent, "myFile");
-
-                //StringContent emailText = new StringContent(lbl_email.Text);
-                //content.Add(emailText, "email");
-
-                string url = "http://" + Communicator.ipAdress + ":8080/uploadImage";
-
-                Console.WriteLine(url);
-
-                var response =
-                    await client.PostAsync(url, content);
-
-                //ToasText = response.Content.ReadAsStringAsync().Result;
-
-
-                Communicator.takePhotoActivated = false;
+                TakePhoto((byte[])image);
+            } else if (Communicator.recordVideoActivated)
+            {
+                TakeVideo((byte[])image);
             }
+        }
+
+        async void TakePhoto(byte[] image)
+        {
+            HttpClient client = new HttpClient();
+
+            MultipartFormDataContent content = new MultipartFormDataContent();
+
+            var values = new Dictionary<string, string> { { "Name", "Deniz"} };
+
+            var json = JsonConvert.SerializeObject(values, Formatting.Indented);
+
+            var stringContent = new StringContent(json);
+
+            content.Add(stringContent, "data");
+
+            ByteArrayContent baContent = new ByteArrayContent(image);
+            content.Add(baContent, "myFile");
+
+            string url = "http://" + Communicator.ipAdress + ":8080/uploadImage";
+
+            Console.WriteLine(url);
+
+            var response =
+                await client.PostAsync(url, content);
+
+            Communicator.takePhotoActivated = false;
+        }
+
+        async void TakeVideo(byte[] image)
+        {
+            HttpClient client = new HttpClient();
+
+            MultipartFormDataContent content = new MultipartFormDataContent();
+
+            var values = new Dictionary<string, string> { { "Name", "Deniz" }, { "Frame", Communicator.frame.ToString() } };
+            Communicator.frame += 1;
+
+            var json = JsonConvert.SerializeObject(values, Formatting.Indented);
+
+            var stringContent = new StringContent(json);
+
+            content.Add(stringContent, "data");
+
+            ByteArrayContent baContent = new ByteArrayContent(image);
+            content.Add(baContent, "myFile");
+
+            string url = "http://" + Communicator.ipAdress + ":8080/uploadVideo";
+
+            Console.WriteLine(url);
+
+            var response =
+                await client.PostAsync(url, content);
+
+            Communicator.takePhotoActivated = false;
         }
     }
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	_ "io/ioutil"
@@ -86,41 +87,47 @@ func endedUpload(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Successfully Uploaded File\n")
 }
 
+type Client struct {
+	Name string
+}
+
 func uploadImageFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Image Upload Endpoint Hit")
 	r.ParseMultipartForm(10 << 20)
 
+	var client Client
+
+	jsonDataToBeParsed := r.MultipartForm.Value["data"][0]
+
+	err := json.Unmarshal([]byte(jsonDataToBeParsed), &client)
+	if err != nil {
+		//http.Error(w, err.Error(), http.StatusBadRequest)
+		fmt.Println(err)
+		return
+	}
+
 	file := r.PostFormValue("myFile")
-	//file, handler, err := r.PostFormValue("myFile")
 
-	//img, _, err := image.Decode(bytes.NewReader(imgByte))
-	//_ = img
+	fmt.Printf("Uploader Name: %+v\n", client.Name)
+	fmt.Printf("File Size: %+v\n", cap([]byte(file)))
 
-	// if err != nil {
-	// 	fmt.Println("Error Retrieving the File")
-	// 	fmt.Println(err)
-	// 	return
-	// }
-	// defer file.Close()
-	// fmt.Printf("Uploaded File: %+v\n", handler.Filename)
-	// fmt.Printf("File Size: %+v\n", handler.Size)
-	// fmt.Printf("MIME Header: %+v\n", handler.Header)
+	if len(file) > 5 {
+		tempFile, err := ioutil.TempFile("temp-images", "*.jpeg") //+handler.Filename)
+		if err != nil {
+			fmt.Println(err)
+		}
+		defer tempFile.Close()
 
-	// Create a temporary file within our temp-images directory that follows
-	// a particular naming pattern
-	tempFile, err := ioutil.TempFile("temp-images", "*.jpeg") //+handler.Filename)
-	if err != nil {
-		fmt.Println(err)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		tempFile.Write([]byte(file))
+
+		fmt.Fprintf(w, "Successfully Uploaded Photo\n")
+	} else {
+		fmt.Println("File Not Found.")
 	}
-	defer tempFile.Close()
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	tempFile.Write([]byte(file))
-
-	fmt.Fprintf(w, "Successfully Uploaded Photo\n")
 }
 
 func setupRoutes() {

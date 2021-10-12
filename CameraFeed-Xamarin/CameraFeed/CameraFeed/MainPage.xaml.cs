@@ -20,18 +20,35 @@ namespace CameraFeed
 
         public void TakePicture(object sender, EventArgs e)
         {
-            Communicator.ipAdress = ipText.Text;
-            Communicator.takePhotoActivated = true;
+            if (ipText.Text?.Length > 5)
+            {
+                Communicator.ipAdress = ipText.Text;
+                Communicator.takePhotoActivated = true;
+            }
+            var animation = new Animation(v => take_photo_button.Scale = v, 1, 1.3);
+            animation.Commit(this, "ScaleIt", length: 150, easing: Easing.Linear,
+                finished: (v, c) => take_photo_button.Scale = 1, repeat: () => false);
+            animation = new Animation(v => take_photo_button.Scale = v, 1.3, 1.0);
+            animation.Commit(this, "ScaleIt", length: 150, easing: Easing.Linear,
+                finished: (v, c) => take_photo_button.Scale = 1, repeat: () => false);
         }
 
         public void StartRecordingButton(object sender, EventArgs e)
         {
-
+            Communicator.recordVideoActivated = true;
+            record_video_button.Text = "Stop Recording";
+            record_video_button.Clicked -= StartRecordingButton;
+            record_video_button.Clicked += StopRecordingButton;
+            take_photo_button.IsVisible = false;
         }
 
         public void StopRecordingButton(object sender, EventArgs e)
         {
-
+            Communicator.recordVideoActivated = true;
+            record_video_button.Text = "Start Recording";
+            record_video_button.Clicked += StartRecordingButton;
+            record_video_button.Clicked -= StopRecordingButton;
+            take_photo_button.IsVisible = true;
         }
     }
 }

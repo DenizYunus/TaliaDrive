@@ -1,23 +1,4 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<!--<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:local="clr-namespace:TaliaDrive_Test1"
-             x:Class="TaliaDrive_Test1.MainPage">
-    <StackLayout>
-        <Frame BackgroundColor="#2196F3" Padding="24" CornerRadius="0">
-            <Label Text="Welcome to Xamarin.Forms!" HorizontalTextAlignment="Center" TextColor="White" FontSize="36"/>
-        </Frame>
-        <Label Text="Camera Preview:" />
-        <local:CameraFeed xmlns="http://xamarin.com/schemas/2014/forms"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:local="clr-namespace:CameraFeed;assembly=CameraFeed"
-             mc:Ignorable="d"
-             x:Class="CameraFeed.MainPage">
-        </local:CameraFeed>
-    </StackLayout>
-</ContentPage>-->
-
 <local:CameraFeed xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:d="http://xamarin.com/schemas/2014/forms/design"
@@ -27,9 +8,11 @@
              x:Class="CameraFeed.MainPage">
     <StackLayout VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand">
         <StackLayout Orientation="Horizontal" VerticalOptions="Start">
-            <Label x:Name="statusText" Text="Camera Preview"/>
-            <StackLayout VerticalOptions="EndAndExpand">
-                <Entry x:Name="ipText"/>
+            <StackLayout HorizontalOptions="StartAndExpand">
+                <Label x:Name="statusText" Text="Camera Preview"/>
+            </StackLayout>
+            <StackLayout HorizontalOptions="EndAndExpand">
+                <Entry Text="192.168.1.101" x:Name="ipText" WidthRequest="200"/>
             </StackLayout>
         </StackLayout>
         <StackLayout Orientation="Horizontal" VerticalOptions="EndAndExpand">
@@ -37,7 +20,7 @@
                 <Button x:Name="take_photo_button" Clicked="TakePicture" Text="Take Photo" Margin="15,0,0,10" WidthRequest="150"/>
             </StackLayout>
             <StackLayout Orientation="Horizontal" HorizontalOptions="EndAndExpand">
-                <Button x:Name="start_video_button" Clicked="StartRecordingButton" Text="Start Recording" Margin="0,0,15,10" WidthRequest="150"/>
+                <Button x:Name="record_video_button" Clicked="StartRecordingButton" Text="Start Recording" Margin="0,0,15,10" WidthRequest="150"/>
             </StackLayout>
         </StackLayout>
     </StackLayout>
