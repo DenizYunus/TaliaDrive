@@ -44,7 +44,7 @@ namespace CameraFeed
 
             MultipartFormDataContent content = new MultipartFormDataContent();
 
-            var values = new Dictionary<string, string> { { "Name", "Deniz"} };
+            var values = new Dictionary<string, string> { { "Name", Communicator.name} };
 
             var json = JsonConvert.SerializeObject(values, Formatting.Indented);
 
@@ -71,7 +71,7 @@ namespace CameraFeed
 
             MultipartFormDataContent content = new MultipartFormDataContent();
 
-            var values = new Dictionary<string, string> { { "Name", "Deniz" }, { "Frame", Communicator.frame.ToString() }, { "VideoId", Communicator.videoId } };
+            var values = new Dictionary<string, string> { { "Name", Communicator.name }, { "Frame", Communicator.frame.ToString() }, { "VideoId", Communicator.videoId } };
             Communicator.frame += 1;
 
             var json = JsonConvert.SerializeObject(values, Formatting.Indented);

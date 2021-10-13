@@ -6,6 +6,8 @@ namespace CameraFeed
 {
     public static class Communicator
     {
+        public static string name = "Name";
+
         public static bool takePhotoActivated = false;
 
         public static bool recordVideoActivated = false;
