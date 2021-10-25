@@ -23,5 +23,12 @@ namespace CameraFeed
 
             Navigation.PushAsync(new MainPage());
         }
+
+        public void GoToGalleryPage(object sender, EventArgs e)
+        {
+            Communicator.name = NameInput.Text;
+
+            Navigation.PushAsync(new GalleryPage());
+        }
     }
 }

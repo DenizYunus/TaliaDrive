@@ -1,14 +1,18 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	_ "io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var sizesSlice []int
@@ -82,6 +86,8 @@ func endedUpload(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Successfully Uploaded File\n")
 } */
 
+var db *sql.DB
+
 type Client struct {
 	Name    string
 	Frame   string
@@ -142,7 +148,6 @@ func endedUpload(w http.ResponseWriter, r *http.Request) {
 func uploadImageFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Image Upload Endpoint Hit")
 	r.ParseMultipartForm(10 << 20)
-
 	var client Client
 
 	jsonDataToBeParsed := r.MultipartForm.Value["data"][0]
@@ -160,34 +165,62 @@ func uploadImageFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("File Size: %+v\n", cap([]byte(file)))
 
 	if len(file) > 5 {
-		tempFile, err := ioutil.TempFile("temp-images", "*.jpeg") //+handler.Filename)
+		tempFile, err := ioutil.TempFile(`temp-images\\`, "*.jpeg") //+handler.Filename)
 		if err != nil {
 			fmt.Println(err)
 		}
 		defer tempFile.Close()
 
-		if err != nil {
-			fmt.Println(err)
-		}
-
 		tempFile.Write([]byte(file))
 
 		fmt.Fprintf(w, "Successfully Uploaded Photo\n")
+		fmt.Println(tempFile.Name())
+		addToLib(client.Name, tempFile.Name(), "image")
 	} else {
 		fmt.Println("File Not Found.")
 	}
+}
+
+type Gallery struct {
+	Images []ImageInGallery
+}
+
+type ImageInGallery struct {
+	Username string
+	Filename string
+	Filetype string
+}
+
+func getGallery(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Get Gallery Endpoint Hit")
+	r.ParseMultipartForm(10 << 20)
+	var client Client
+
+	jsonDataToBeParsed := r.MultipartForm.Value["data"][0]
+
+	err := json.Unmarshal([]byte(jsonDataToBeParsed), &client)
+	if err != nil {
+		//http.Error(w, err.Error(), http.StatusBadRequest)
+		fmt.Println(err)
+		return
+	}
+
+	gallery := Gallery{getLib(client.Name)}
+
+	b, err := json.Marshal(gallery)
+	if err != nil {
+		fmt.Println(err)
+	}
+	w.Write(b)
+	fmt.Println(string(b[:]))
 }
 
 func setupRoutes() {
 	http.HandleFunc("/uploadVideo", uploadVideoFile)
 	http.HandleFunc("/uploadImage", uploadImageFile)
 	http.HandleFunc("/endVideo", endedUpload)
+	http.HandleFunc("/getGallery", getGallery)
 	http.ListenAndServe(":8080", nil)
-}
-
-func main() {
-	fmt.Println("Started Listening.")
-	setupRoutes()
 }
 
 func returnCurPath() string {
@@ -212,4 +245,67 @@ func writeToFile(currentDirectory string, data string) {
 	}
 
 	fmt.Println("Wrote to file First")
+}
+
+func main() {
+	fmt.Println("Started Listening.")
+
+	InitializeDB()
+
+	setupRoutes()
+}
+
+func InitializeDB() {
+	fmt.Println("Main Started.")
+
+	var err error
+	db, err = sql.Open("mysql", "root@tcp(127.0.0.1:3306)/test")
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		fmt.Println("Database initialized.")
+	}
+	//defer db.Close()
+
+	// addToLib(db, "Dedniz", "olduu", "image")
+	// getLib(db, "Deniz")
+}
+
+func addToLib(_username string, _filename string, _filetype string) {
+	_, err := db.Exec(fmt.Sprintf("INSERT INTO filedata VALUES ('%s', '%s', '%s')", _username, _filename, _filetype))
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func getLib(_username string) []ImageInGallery {
+	var (
+		Username string
+		Filename string
+		Type     string
+	)
+
+	rows, err := db.Query("select Username, Filename, Type from filedata where Username = ?", _username)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var images []ImageInGallery
+
+	for rows.Next() {
+		err := rows.Scan(&Username, &Filename, &Type)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		iig := ImageInGallery{_username, Filename, "image"}
+		images = append(images, iig)
+		// log.Println(Username, Filename, Type)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return images
 }

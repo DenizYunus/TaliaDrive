@@ -12,7 +12,7 @@
                 <Label x:Name="statusText" Text="Camera Preview"/>
             </StackLayout>
             <StackLayout HorizontalOptions="EndAndExpand">
-                <Entry Text="192.168.1.101" x:Name="ipText" WidthRequest="200"/>
+                <Entry Text="18.116.82.71" x:Name="ipText" WidthRequest="200"/>
             </StackLayout>
         </StackLayout>
         <StackLayout Orientation="Horizontal" VerticalOptions="EndAndExpand">

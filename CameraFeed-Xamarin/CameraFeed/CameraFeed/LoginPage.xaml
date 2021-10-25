@@ -3,9 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="CameraFeed.LoginPage">
     <ContentPage.Content>
-        <StackLayout VerticalOptions="Start" Orientation="Horizontal">
-            <Entry x:Name="NameInput" Placeholder="Enter Your Name" HorizontalOptions="FillAndExpand" />
-            <Button Clicked="GoToCameraPage" Text="Login" HorizontalOptions="End" />
+        <StackLayout>
+            <StackLayout VerticalOptions="Start" Orientation="Horizontal">
+                <Entry x:Name="NameInput" Placeholder="Enter Your Name" HorizontalOptions="FillAndExpand" />
+                <Button Clicked="GoToCameraPage" Text="Login" HorizontalOptions="End" />
+            </StackLayout>
+            <StackLayout VerticalOptions="Start">
+                <Button Clicked="GoToGalleryPage" Text="See Gallery" HorizontalOptions="CenterAndExpand"/>
+            </StackLayout>
         </StackLayout>
     </ContentPage.Content>
 </ContentPage>
