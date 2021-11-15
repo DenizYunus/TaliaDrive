@@ -1,11 +1,12 @@
 package com.example.taliadrive_w_cam_kit
 
+import android.media.MediaRecorder
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.widget.ImageButton
 import android.widget.Toast
-import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import top.defaults.camera.*
 import java.io.File
@@ -16,6 +17,7 @@ import java.net.URI
 import java.util.*
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
+import androidx.annotation.Nullable
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.features.*
@@ -24,13 +26,16 @@ import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.content.*
-
+import kotlinx.coroutines.*
 
 
 class CameraActivity : AppCompatActivity() {
-    lateinit var photographer:Photographer
-    lateinit var photographerHelper:PhotographerHelper
-    lateinit var username:String
+    final val ipAddr = "192.168.1.102"
+
+    lateinit var photographer: Photographer
+    lateinit var photographerHelper: PhotographerHelper
+    lateinit var username: String
+    var recordingNow = false
 
     var photoModeActive = true
 
@@ -47,20 +52,30 @@ class CameraActivity : AppCompatActivity() {
             //your codes here
         }
 
-        val takePhotoButton = findViewById<ImageButton>(R.id.takePhotoButton)
-        takePhotoButton.setOnClickListener { photographer.takePicture() }
+        val takePhotoVideoButton = findViewById<ImageButton>(R.id.takePhotoButton)
+        takePhotoVideoButton.setOnClickListener {
+            if (photoModeActive) photographer.takePicture()
+            else {
+                if (!recordingNow) {
+                    photographer.startRecording(null)
+                    recordingNow = true
+                } else {
+                    photographer.finishRecording()
+                    recordingNow = false
+                }
+            }
+        }
 
         val changeModeButton = findViewById<ImageButton>(R.id.changeModeButton)
         changeModeButton.setOnClickListener {
             photographerHelper.switchMode()
             photoModeActive = !photoModeActive
 
-            if (photoModeActive)
-            {
-                takePhotoButton.setImageResource(R.drawable.ic_camera_button)
+            if (photoModeActive) {
+                takePhotoVideoButton.setImageResource(R.drawable.ic_camera_button)
                 changeModeButton.setImageResource(R.drawable.ic_video_button)
             } else {
-                takePhotoButton.setImageResource(R.drawable.ic_video_button)
+                takePhotoVideoButton.setImageResource(R.drawable.ic_video_button)
                 changeModeButton.setImageResource(R.drawable.ic_camera_button)
             }
         }
@@ -74,10 +89,14 @@ class CameraActivity : AppCompatActivity() {
             override fun onZoomChanged(zoom: Float) {}
             override fun onPreviewStopped() {}
             override fun onStartRecording() {}
-            override fun onFinishRecording(filePath: String) {}
+            override fun onFinishRecording(filePath: String) {
+                videoEnded(filePath)
+            }
+
             override fun onShotFinished(filePath: String) {
                 photoTaken(filePath)
             }
+
             fun onError(error: Error?) {}
         })
         photographerHelper = PhotographerHelper(photographer);
@@ -95,68 +114,99 @@ class CameraActivity : AppCompatActivity() {
         super.onPause()
     }
 
-    fun photoTaken(filePath: String) = runBlocking{
-        val dataObject = JSONObject()
-        dataObject.put("Name", "Deniz")
+    val photoJob = Job()
+    val photoCoroutineScope = CoroutineScope(Dispatchers.Default + photoJob)
 
-        Toast.makeText(this@CameraActivity, "using: " + filePath, Toast.LENGTH_LONG).show()
+    fun photoTaken(filePath: String) = runBlocking {
+        photoCoroutineScope.launch {
+            try {
+                withContext(Dispatchers.Default) {
+                    val dataObject = JSONObject()
+                    dataObject.put("Name", "Deniz")
+
+                    //Toast.makeText(this@CameraActivity, "using: " + filePath, Toast.LENGTH_LONG)
+                    //  .show()
 
 
-        try {
-            val client = HttpClient()
+                    try {
+                        val client = HttpClient()
 
-            val response: HttpResponse = client.submitFormWithBinaryData(
-                url = "http://192.168.1.102:8080/uploadImage",
-                formData = formData {
-                    append("data", dataObject.toString())
-                    append("image", File(filePath).readBytes(), Headers.build {
-                        append(HttpHeaders.ContentType, "image/jpeg")
-                        append(
-                            HttpHeaders.ContentDisposition,
-                            "filename=".plus(File(filePath).name)
-                        )
-                    })
+                        val response: HttpResponse = client.submitFormWithBinaryData(
+                            url = "http://$ipAddr:8080/uploadImage",
+                            formData = formData {
+                                append("data", dataObject.toString())
+                                append("image", File(filePath).readBytes(), Headers.build {
+                                    append(HttpHeaders.ContentType, "image/jpeg")
+                                    append(
+                                        HttpHeaders.ContentDisposition,
+                                        "filename=".plus(File(filePath).name)
+                                    )
+                                })
+                            }
+                        ) {
+                            onUpload { bytesSentTotal, contentLength ->
+                                println("Sent $bytesSentTotal bytes from $contentLength")
+                                File(filePath).delete()
+                            }
+                        }
+                        val result = response.receive<String>()
+
+                        println("RESPONSE BURDA: " + result)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
-            ) {
-                onUpload { bytesSentTotal, contentLength ->
-                    println("Sent $bytesSentTotal bytes from $contentLength")
+            } catch (e: Exception) {
+                println("AAAAAA")
+                e.printStackTrace()
+            }
+        }
+    }
+
+    val videoJob = Job()
+    val videoCoroutineScope = CoroutineScope(Dispatchers.Default + videoJob)
+
+    fun videoEnded(filePath: String) = runBlocking {
+        videoCoroutineScope.launch {
+            try {
+                withContext(Dispatchers.Default) {
+                    val dataObject = JSONObject()
+                    dataObject.put("Name", "Deniz")
+
+                    try {
+                        val client = HttpClient()
+
+                        val response: HttpResponse = client.submitFormWithBinaryData(
+                            url = "http://$ipAddr:8080/uploadVideo",
+                            formData = formData {
+                                append("data", dataObject.toString())
+                                append("video", File(filePath).readBytes(), Headers.build {
+                                    append(HttpHeaders.ContentType, "image/jpeg")
+                                    append(
+                                        HttpHeaders.ContentDisposition,
+                                        "filename=".plus(File(filePath).name)
+                                    )
+                                })
+                            }
+                        ) {
+                            onUpload { bytesSentTotal, contentLength ->
+                                println("Sent $bytesSentTotal bytes from $contentLength")
+                                File(filePath).delete()
+                            }
+                        }
+                        val result = response.receive<String>()
+
+                        println("RESPONSE BURDA: " + result)
+                    } catch (e: Exception) {
+                        println(e.stackTrace)
+                    }
                 }
             }
-            val result = response.receive<String>()
-
-            println("RESPONSE BURDA: " + result)
-        } catch (e:Exception) {
-            println(e.stackTrace)
+            catch (e: Exception)
+            {
+                println("AAAAAAAA")
+                e.printStackTrace()
+            }
         }
-        /*val response: HttpResponse = client.submitForm(
-            url = "http://192.168.1.102:8080/uploadImage",
-            formParameters = Parameters.build {
-                append("data", dataObject.toString())
-                append("myFile", File(filePath).readBytes().decodeToString())
-            },
-            encodeInQuery = true
-        )*/
-
-
-        /*var multipart: MultipartUtility =
-            MultipartUtility("http://192.168.1.102:8080/uploadImage", "UTF-8")
-
-        multipart.addFormField("Name", "Deniz")
-
-        //multipart.addFilePart("myFile", File(filePath))
-
-        val response = multipart.finish()
-
-        Toast.makeText(this@CameraActivity, response[0], Toast.LENGTH_LONG).show()*/
-
-        /*
-        Fuel.upload("http://192.168.1.102:8080/uploadImage", method = Method.POST)
-            .add(
-                FileDataPart(File(filePath), name = "myFile", filename="contents.json"),
-                InlineDataPart(dataObject.toString(), name="data")
-            )
-            .response { result ->
-                Toast.makeText(this@CameraActivity, result.toString(), Toast.LENGTH_LONG).show()
-            }*/
     }
 }

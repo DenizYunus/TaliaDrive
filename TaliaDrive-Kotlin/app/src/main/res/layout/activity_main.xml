@@ -4,58 +4,89 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/background"
     tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/taliaTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        android:text="__\nTALIADrive"
+        android:textColor="#7FFF00"
+        android:textSize="15dp"
+        app:layout_constraintStart_toStartOf="@+id/ll_main_layout"
+        app:layout_constraintTop_toTopOf="@+id/ll_main_layout" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Extend the Memories"
+        android:textColor="#7FFF00"
+        android:textSize="32dp"
+        android:layout_marginTop="55dp"
+        android:layout_marginLeft="15dp"
+        app:layout_constraintStart_toStartOf="@+id/ll_main_layout"
+        app:layout_constraintTop_toTopOf="@+id/ll_main_layout" />
 
     <LinearLayout
         android:id="@+id/ll_main_layout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:gravity="center"
-        android:background="#444444"
-        android:padding="25dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="25sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="25dp"
-            android:textColor="#6dffbf"
             android:padding="30dp"
-            android:text="Login"/>
+            android:text="Login"
+            android:textColor="#6dffbf"
+            android:textSize="25dp" />
+
         <EditText
             android:id="@+id/et_user_name"
-            android:hint="User Name"
-            android:textColor="#6bfff7"
-            android:textColorHint="#52afaa"
-            android:textAlignment="center"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:hint="User Name"
+            android:textAlignment="center"
+            android:textColor="#6bfff7"
+            android:textColorHint="#52afaa" />
+
         <EditText
             android:id="@+id/et_password"
-            android:hint="Password"
-            android:textColor="#6bfff7"
-            android:textColorHint="#52afaa"
-            android:textAlignment="center"
-            android:inputType="textPassword"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:textAlignment="center"
+            android:textColor="#6bfff7"
+            android:textColorHint="#52afaa" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:padding="25dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:padding="25dp">
+
             <Button
                 android:id="@+id/btn_reset"
-                android:text="Reset"
-                android:textAllCaps="false"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:text="Reset"
+                android:textAllCaps="false" />
+
             <Button
                 android:id="@+id/btn_submit"
-                android:text="Submit"
-                android:textAllCaps="false"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:text="Submit"
+                android:textAllCaps="false" />
         </LinearLayout>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

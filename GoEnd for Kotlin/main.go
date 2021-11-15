@@ -11,7 +11,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
+
+	//"os/exec"
 	"path/filepath"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -23,7 +24,7 @@ func uploadVideoFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Video Upload Endpoint Hit")
 	r.ParseMultipartForm(10 << 20)
 
-	file, handler, err := r.FormFile("myFile")
+	file, handler, err := r.FormFile("video")
 	if err != nil {
 		fmt.Println("Error Retrieving the File")
 		fmt.Println(err)
@@ -41,7 +42,7 @@ func uploadVideoFile(w http.ResponseWriter, r *http.Request) {
 		fmt.Print("33")
 		fmt.Println(err)
 	}
-	createdFileName := tempFile.Name()
+	//createdFileName := tempFile.Name()
 	defer tempFile.Close()
 
 	fileBytes, err := ioutil.ReadAll(file)
@@ -52,14 +53,14 @@ func uploadVideoFile(w http.ResponseWriter, r *http.Request) {
 	tempFile.Write(fileBytes)
 	// return that we have successfully uploaded our file!
 
-	writeToFile(returnCurPath(), createdFileName)
+	//writeToFile(returnCurPath(), createdFileName)
 	a := append(sizesSlice, int(handler.Size))
 	_ = a
 
 	fmt.Fprintf(w, "Successfully Uploaded File\n")
 }
 
-func endedUpload(w http.ResponseWriter, r *http.Request) {
+/*func endedUpload(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("File Ended Endpoint Hit")
 
 	//Get final file size
@@ -86,7 +87,7 @@ func endedUpload(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(string(stdout))
 
 	fmt.Fprintf(w, "Successfully Uploaded File\n")
-}
+}*/
 
 var db *sql.DB
 
@@ -233,7 +234,7 @@ func getGallery(w http.ResponseWriter, r *http.Request) {
 func setupRoutes() {
 	http.HandleFunc("/uploadVideo", uploadVideoFile)
 	http.HandleFunc("/uploadImage", uploadImageFile)
-	http.HandleFunc("/endVideo", endedUpload)
+	//	http.HandleFunc("/endVideo", endedUpload)
 	http.HandleFunc("/getGallery", getGallery)
 	http.ListenAndServe(":8080", nil)
 }
