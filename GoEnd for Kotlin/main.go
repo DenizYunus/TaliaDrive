@@ -177,7 +177,7 @@ func uploadImageFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("File Size: %+v\n", cap(buf.Bytes()))
 
 	if len(buf.Bytes()) > 5 {
-		tempFile, err := ioutil.TempFile(`temp-images\`, "*.jpeg") //+handler.Filename)
+		tempFile, err := ioutil.TempFile("temp-images\\\\", "*.jpeg") //+handler.Filename)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -187,7 +187,7 @@ func uploadImageFile(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Fprintf(w, "Successfully Uploaded Photo\n")
 		fmt.Println(tempFile.Name())
-		//addToLib(client.Name, tempFile.Name(), "image")
+		addToLib(client.Name, tempFile.Name(), "image")
 		buf.Reset()
 
 		return
@@ -212,7 +212,7 @@ func getGallery(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20)
 	var client Client
 
-	jsonDataToBeParsed := r.MultipartForm.Value["data"][0]
+	jsonDataToBeParsed := r.Form.Get("data")
 
 	err := json.Unmarshal([]byte(jsonDataToBeParsed), &client)
 	if err != nil {
@@ -288,6 +288,7 @@ func InitializeDB() {
 }
 
 func addToLib(_username string, _filename string, _filetype string) {
+	fmt.Println(_filename)
 	_, err := db.Exec(fmt.Sprintf("INSERT INTO filedata VALUES ('%s', '%s', '%s')", _username, _filename, _filetype))
 	if err != nil {
 		log.Fatal(err)

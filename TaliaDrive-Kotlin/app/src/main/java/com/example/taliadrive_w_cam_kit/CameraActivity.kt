@@ -31,19 +31,26 @@ import kotlinx.coroutines.*
 
 
 class CameraActivity : AppCompatActivity() {
-    final val ipAddr = "192.168.1.102"
+    //final val ipAddr = "192.168.1.102" //benim pc wifi
+    final val ipAddr = "18.116.82.71" //sunucu aws windows
 
     lateinit var photographer: Photographer
     lateinit var photographerHelper: PhotographerHelper
-    lateinit var username: String
+    var username: String = ""
     var recordingNow = false
 
     var photoModeActive = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        username = intent.getStringExtra("com.example.taliadrive.MESSAGE").toString()
+
+        val intentExtras = getIntent().extras
+        username = intentExtras?.getString("username").toString()
+
+
+        //username = intent.getStringExtra("com.example.taliadrive.MESSAGE").toString()
         setContentView(R.layout.activity_camera)
+        Toast.makeText(this@CameraActivity, "Username: ".plus(username), Toast.LENGTH_LONG).show()
 
         val SDK_INT = Build.VERSION.SDK_INT
         if (SDK_INT > 8) {
@@ -69,8 +76,10 @@ class CameraActivity : AppCompatActivity() {
 
         val goToGalleryButton = findViewById<ImageButton>(R.id.galleryButton)
         goToGalleryButton.setOnClickListener {
-            val intent = Intent(this, GalleryActivity::class.java).apply {
-            }
+            val intent = Intent(this, GalleryActivity::class.java)
+            val extras = Bundle()
+            extras.putString("username", username.toString())
+            intent.putExtras(extras)
             startActivity(intent)
         }
 
@@ -103,6 +112,7 @@ class CameraActivity : AppCompatActivity() {
 
             override fun onShotFinished(filePath: String) {
                 photoTaken(filePath)
+                Toast.makeText(this@CameraActivity, "Uploaded a photo.", Toast.LENGTH_LONG).show()
             }
 
             fun onError(error: Error?) {}
@@ -130,7 +140,7 @@ class CameraActivity : AppCompatActivity() {
             try {
                 withContext(Dispatchers.Default) {
                     val dataObject = JSONObject()
-                    dataObject.put("Name", "Deniz")
+                    dataObject.put("Name", username)
 
                     //Toast.makeText(this@CameraActivity, "using: " + filePath, Toast.LENGTH_LONG)
                     //  .show()

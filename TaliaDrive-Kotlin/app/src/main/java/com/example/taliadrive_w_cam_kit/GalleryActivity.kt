@@ -25,13 +25,20 @@ import java.io.File
 
 class GalleryActivity : AppCompatActivity() {
 
-    final val ipAddr = "192.168.1.102"
+    //final val ipAddr = "192.168.1.102" //benim pc wifi
+    final val ipAddr = "18.116.82.71" //sunucu aws windows
 
     var widX = 200
     var widY = 200
 
+    lateinit var username: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val intentExtras = getIntent().extras
+        username = intentExtras?.getString("username").toString()
+
         setContentView(R.layout.activity_gallery)
 
         var displayMetrics = DisplayMetrics();
@@ -42,9 +49,9 @@ class GalleryActivity : AppCompatActivity() {
 
         getGallery()
 
-        addItem("https://www.pixsy.com/wp-content/uploads/2021/04/ben-sweet-2LowviVHZ-E-unsplash-1.jpeg")
+        /*addItem("https://www.pixsy.com/wp-content/uploads/2021/04/ben-sweet-2LowviVHZ-E-unsplash-1.jpeg")
         addItem("https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg")
-        addItem("https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg")
+        addItem("https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg")*/
 
     }
 
@@ -65,7 +72,7 @@ class GalleryActivity : AppCompatActivity() {
     fun getGallery() = runBlocking {
         try {
             val dataObject = JSONObject()
-            dataObject.put("Name", "Deniz")
+            dataObject.put("Name", username)
 
             try {
                 val client = HttpClient()
@@ -84,7 +91,13 @@ class GalleryActivity : AppCompatActivity() {
 
                 val jsonObject = JSONTokener(result).nextValue() as JSONObject
 
-                val jsonArray = jsonObject.getJSONArray("data")
+                val jsonArray = jsonObject.getJSONArray("Images")
+
+                for (i in 0 until jsonArray.length()) {
+                    val fileName = jsonArray.getJSONObject(i).getString("Filename")
+                    val fileType = jsonArray.getJSONObject(i).getString("Filetype")
+                    addItem("http://$ipAddr/".plus(fileName))
+                }
 
             } catch (e: Exception) {
                 e.printStackTrace()

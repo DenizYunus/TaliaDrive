@@ -8,7 +8,7 @@ import android.security.NetworkSecurityPolicy
 import android.view.View
 import android.widget.*
 
-const val EXTRA_MESSAGE = "com.example.taliadrive.MESSAGE"
+//const val EXTRA_MESSAGE = "com.example.taliadrive.MESSAGE"
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,9 +30,13 @@ class MainActivity : AppCompatActivity() {
             val password = et_password.text;
             Toast.makeText(this@MainActivity, "Entered with: " + user_name, Toast.LENGTH_LONG).show()
 
-            val intent = Intent(this, CameraActivity::class.java).apply {
-                putExtra(EXTRA_MESSAGE, user_name)
-            }
+
+            val intent = Intent(this, CameraActivity::class.java)
+            val extras = Bundle()
+            extras.putString("username", user_name.toString())
+            intent.putExtras(extras)
+            //intent.putExtra("username", user_name)
+
             startActivity(intent)
         }
     }
