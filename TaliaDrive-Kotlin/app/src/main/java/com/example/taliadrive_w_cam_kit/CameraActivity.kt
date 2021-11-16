@@ -1,5 +1,6 @@
 package com.example.taliadrive_w_cam_kit
 
+import android.content.Intent
 import android.media.MediaRecorder
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -64,6 +65,13 @@ class CameraActivity : AppCompatActivity() {
                     recordingNow = false
                 }
             }
+        }
+
+        val goToGalleryButton = findViewById<ImageButton>(R.id.galleryButton)
+        goToGalleryButton.setOnClickListener {
+            val intent = Intent(this, GalleryActivity::class.java).apply {
+            }
+            startActivity(intent)
         }
 
         val changeModeButton = findViewById<ImageButton>(R.id.changeModeButton)

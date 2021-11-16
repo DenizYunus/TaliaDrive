@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
+    id 'kotlin-android-extensions'
 }
 
 android {
@@ -35,6 +36,7 @@ dependencies {
     implementation 'com.github.duanhong169:camera:1.0.3'
 
     implementation "io.ktor:ktor-client-android:1.6.5"
+    implementation 'com.squareup.picasso:picasso:2.8'
     //implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.1'
     //implementation 'com.squareup.retrofit2:retrofit:2.0.0'
     //implementation 'com.squareup.retrofit2:converter-gson:2.0.0'
