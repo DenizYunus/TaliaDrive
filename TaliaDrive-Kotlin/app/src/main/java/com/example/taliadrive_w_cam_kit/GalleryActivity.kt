@@ -1,12 +1,18 @@
 package com.example.taliadrive_w_cam_kit
 
 import android.app.ActionBar
+import android.content.Intent
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.Layout
 import android.util.DisplayMetrics
+import android.util.Log
+import android.util.Log.INFO
+import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.squareup.picasso.Picasso
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -25,8 +31,8 @@ import java.io.File
 
 class GalleryActivity : AppCompatActivity() {
 
-    //final val ipAddr = "192.168.1.102" //benim pc wifi
-    final val ipAddr = "18.116.82.71" //sunucu aws windows
+    final val ipAddr = "192.168.1.102" //benim pc wifi
+    //final val ipAddr = "18.116.82.71" //sunucu aws windows
 
     var widX = 200
     var widY = 200
@@ -55,14 +61,34 @@ class GalleryActivity : AppCompatActivity() {
 
     }
 
-    fun addItem(_link: String) {
+    fun addItem(_bmpLink: String, _imageLink: String) {
         val dynamicButton = ImageButton(this)
+
+        dynamicButton.setOnClickListener {/*
+            Log.d("infodebug", "Clicked: ".plus(_bmpLink))
+            val imageView = ImageView(this)
+            // setting height and width of imageview
+            imageView.layoutParams = LinearLayout.LayoutParams(400, 400)
+            imageView.x = 20F //setting margin from left
+            imageView.y = 20F //setting margin from top
+            Picasso.get().load(_imageLink).fit().centerCrop().into(imageView)
+            val layout = findViewById<ConstraintLayout>(R.id.fullLayout)
+            layout?.addView(imageView)*/
+
+            val intent = Intent(this, ImagePopup::class.java)
+            val extras = Bundle()
+            extras.putString("image_link", _imageLink)
+            intent.putExtras(extras)
+            startActivity(intent)
+        }
+
         // setting layout_width and layout_height using layout parameters
         dynamicButton.layoutParams = LinearLayout.LayoutParams(
             widX,
             widY
         )
-        Picasso.get().load(_link).fit().centerCrop().into(dynamicButton)
+
+        Picasso.get().load(_bmpLink).fit().centerCrop().into(dynamicButton)
 
         dynamicButton.setBackgroundColor(Color.GREEN)
         // add Button to LinearLayout
@@ -96,14 +122,17 @@ class GalleryActivity : AppCompatActivity() {
                 for (i in 0 until jsonArray.length()) {
                     val fileName = jsonArray.getJSONObject(i).getString("Filename")
                     val fileType = jsonArray.getJSONObject(i).getString("Filetype")
-                    addItem("http://$ipAddr/".plus(fileName))
+                    if (fileType == "video")
+                        continue  //TODO: ADD VIDEO SETTINGS TOO
+                    val bitmapFileName = jsonArray.getJSONObject(i).getString("BitmapFilename")
+                    //Log.d("infodebug", "http://$ipAddr/".plus(bitmapFileName))
+                    addItem("http://$ipAddr/".plus(bitmapFileName), "http://$ipAddr/".plus(fileName))
                 }
 
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         } catch (e: Exception) {
-            println("AAAAAA")
             e.printStackTrace()
         }
     }

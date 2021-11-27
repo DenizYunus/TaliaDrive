@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"image"
 	"io"
 	"io/ioutil"
 	_ "io/ioutil"
@@ -15,7 +16,12 @@ import (
 	//"os/exec"
 	"path/filepath"
 
+	"image/jpeg"
+	_ "image/png"
+
 	_ "github.com/go-sql-driver/mysql"
+
+	"github.com/nfnt/resize"
 )
 
 var sizesSlice []int
@@ -99,55 +105,6 @@ type Client struct {
 
 var client Client
 
-/*func uploadVideoFile(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Video Upload Endpoint Hit")
-	r.ParseMultipartForm(10 << 20)
-
-	jsonDataToBeParsed := r.MultipartForm.Value["data"][0]
-
-	err := json.Unmarshal([]byte(jsonDataToBeParsed), &client)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	file := r.PostFormValue("myFile")
-
-	fmt.Printf("Uploader Name: %+v\n", client.Name)
-	fmt.Printf("File Size: %+v\n", cap([]byte(file)))
-
-	if len(file) > 5 {
-		f, err := os.OpenFile(returnCurPath()+`\video-temp-images\`+client.VideoId+"_"+client.Frame+".jpg", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			fmt.Printf("Unable to create file: %v", err)
-		}
-
-		_, err = f.Write([]byte(file))
-		if err != nil {
-			fmt.Printf("Unable to write file: %v", err)
-		}
-
-		f.Close()
-
-		fmt.Fprintf(w, "Successfully Uploaded Photo\n")
-	} else {
-		fmt.Println("File Not Found.")
-	}
-}
-
-func endedUpload(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Video Ended Endpoint Hit")
-
-	//currentPath := returnCurPath() //Get current path
-	//finalCommand := `ffmpeg -r 4 -start_number 0 -i "` + currentPath + `\video-temp-images\` + client.VideoId + "_" + `%d.jpg" -c:v libx264 -vf "fps=30,format=yuv420p" ` + currentPath + `\final-videos\` + client.VideoId + `_vid.mp4`
-	//fmt.Printf("Final Command is %s\n", finalCommand)
-
-	out := exec.Command(returnCurPath()+"\\converter.bat", client.VideoId).Run()
-
-	fmt.Printf("Out : %s", out)
-
-}*/
-
 func uploadImageFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Image Upload Endpoint Hit")
 	r.ParseMultipartForm(10 << 20)
@@ -185,9 +142,23 @@ func uploadImageFile(w http.ResponseWriter, r *http.Request) {
 
 		tempFile.Write(buf.Bytes())
 
+		orig_image, _, err := image.Decode(&buf)
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		newImage := resize.Resize(64, 64, orig_image, resize.Lanczos3)
+
+		bitmapImage, _ := os.Create("temp-images\\\\Thumbnails\\\\" + tempFile.Name()[13:] + ".bmp")
+		defer bitmapImage.Close()
+
+		jpeg.Encode(bitmapImage, newImage, &jpeg.Options{75})
+
 		fmt.Fprintf(w, "Successfully Uploaded Photo\n")
 		fmt.Println(tempFile.Name())
-		addToLib(client.Name, tempFile.Name(), "image")
+		addToLib(client.Name, tempFile.Name(), bitmapImage.Name(), "image")
 		buf.Reset()
 
 		return
@@ -202,9 +173,10 @@ type Gallery struct {
 }
 
 type ImageInGallery struct {
-	Username string
-	Filename string
-	Filetype string
+	Username       string
+	Filename       string
+	BitmapFilename string
+	Filetype       string
 }
 
 func getGallery(w http.ResponseWriter, r *http.Request) {
@@ -287,9 +259,9 @@ func InitializeDB() {
 	// getLib(db, "Deniz")
 }
 
-func addToLib(_username string, _filename string, _filetype string) {
+func addToLib(_username string, _filename string, _bitmap_filename string, _filetype string) {
 	fmt.Println(_filename)
-	_, err := db.Exec(fmt.Sprintf("INSERT INTO filedata VALUES ('%s', '%s', '%s')", _username, _filename, _filetype))
+	_, err := db.Exec(fmt.Sprintf("INSERT INTO filedata VALUES ('%s', '%s', '%s', '%s')", _username, _filename, _bitmap_filename, _filetype))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -297,12 +269,13 @@ func addToLib(_username string, _filename string, _filetype string) {
 
 func getLib(_username string) []ImageInGallery {
 	var (
-		Username string
-		Filename string
-		Type     string
+		Username        string
+		Filename        string
+		bitmap_filename string
+		Type            string
 	)
 
-	rows, err := db.Query("select Username, Filename, Type from filedata where Username = ?", _username)
+	rows, err := db.Query("select Username, Filename, bitmap_filename, Type from filedata where Username = ?", _username)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -311,12 +284,12 @@ func getLib(_username string) []ImageInGallery {
 	var images []ImageInGallery
 
 	for rows.Next() {
-		err := rows.Scan(&Username, &Filename, &Type)
+		err := rows.Scan(&Username, &Filename, &bitmap_filename, &Type)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		iig := ImageInGallery{_username, Filename, "image"}
+		iig := ImageInGallery{_username, Filename, bitmap_filename, "image"}
 		images = append(images, iig)
 		// log.Println(Username, Filename, Type)
 	}
