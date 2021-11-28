@@ -75,10 +75,10 @@
             android:padding="25dp">
 
             <Button
-                android:id="@+id/btn_reset"
+                android:id="@+id/btn_register"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Reset"
+                android:text="Register"
                 android:textAllCaps="false" />
 
             <Button
@@ -88,5 +88,13 @@
                 android:text="Submit"
                 android:textAllCaps="false" />
         </LinearLayout>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="50sp"
+            android:id="@+id/errorMessage"
+            android:gravity="center_horizontal"
+            android:text=""
+            android:textColor="@android:color/holo_red_light" />
+
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
