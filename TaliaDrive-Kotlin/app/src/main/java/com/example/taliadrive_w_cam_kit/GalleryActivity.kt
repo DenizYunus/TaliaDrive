@@ -31,8 +31,8 @@ import java.io.File
 
 class GalleryActivity : AppCompatActivity() {
 
-    final val ipAddr = "192.168.1.102" //benim pc wifi
-    //final val ipAddr = "18.116.82.71" //sunucu aws windows
+    //final val ipAddr = "192.168.1.102" //benim pc wifi
+    final val ipAddr = "18.116.82.71" //sunucu aws windows
 
     var widX = 200
     var widY = 200
