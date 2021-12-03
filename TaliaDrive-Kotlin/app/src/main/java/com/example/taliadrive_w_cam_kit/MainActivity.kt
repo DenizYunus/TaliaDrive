@@ -25,18 +25,20 @@ import java.io.File
 //const val EXTRA_MESSAGE = "com.example.taliadrive.MESSAGE"
 
 class MainActivity : AppCompatActivity() {
-    //final val ipAddr = "192.168.1.102" //benim pc wifi
-    final val ipAddr = "18.116.82.71" //sunucu aws windows
+    final val ipAddr = "192.168.1.101" //benim pc wifi
+    //final val ipAddr = "18.116.82.71" //sunucu aws windows
 
     companion object {
         private const val CAMERA_PERMISSION_CODE = 100
         private const val STORAGE_PERMISSION_CODE = 101
         private const val RECORD_AUDIO_PERMISSION_CODE = 102
+        private const val READ_STORAGE_PERMISSION_CODE = 103
     }
 
     var cameraPerm = false
     var storagePerm = false
     var micPerm = false
+    var readStoragePerm = false
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,6 +68,7 @@ class MainActivity : AppCompatActivity() {
             checkPermission(Manifest.permission.CAMERA, CAMERA_PERMISSION_CODE)
             checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, STORAGE_PERMISSION_CODE)
             checkPermission(Manifest.permission.RECORD_AUDIO, RECORD_AUDIO_PERMISSION_CODE)
+            checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE, READ_STORAGE_PERMISSION_CODE)
 
             if (cameraPerm && storagePerm && micPerm) {
                 if (checkUsernamePassword(user_name, password)) {
@@ -142,6 +145,7 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.CAMERA -> cameraPerm = true
                 Manifest.permission.WRITE_EXTERNAL_STORAGE -> storagePerm = true
                 Manifest.permission.RECORD_AUDIO -> micPerm = true
+                Manifest.permission.READ_EXTERNAL_STORAGE -> readStoragePerm = true
             }
         }
     }
@@ -165,6 +169,12 @@ class MainActivity : AppCompatActivity() {
         } else if (requestCode == RECORD_AUDIO_PERMISSION_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 micPerm = true
+            } else {
+                Toast.makeText(this@MainActivity, "Microphone Permission Denied", Toast.LENGTH_SHORT).show()
+            }
+        } else if (requestCode == READ_STORAGE_PERMISSION_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                readStoragePerm = true
             } else {
                 Toast.makeText(this@MainActivity, "Microphone Permission Denied", Toast.LENGTH_SHORT).show()
             }

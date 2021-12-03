@@ -31,8 +31,8 @@ import java.io.File
 
 class GalleryActivity : AppCompatActivity() {
 
-    //final val ipAddr = "192.168.1.102" //benim pc wifi
-    final val ipAddr = "18.116.82.71" //sunucu aws windows
+    final val ipAddr = "192.168.1.101" //benim pc wifi
+    //final val ipAddr = "18.116.82.71" //sunucu aws windows
 
     var widX = 200
     var widY = 200
@@ -61,7 +61,7 @@ class GalleryActivity : AppCompatActivity() {
 
     }
 
-    fun addItem(_bmpLink: String, _imageLink: String) {
+    fun addItem(_bmpLink: String, _imageLink: String, type: String) {
         val dynamicButton = ImageButton(this)
 
         dynamicButton.setOnClickListener {/*
@@ -75,11 +75,20 @@ class GalleryActivity : AppCompatActivity() {
             val layout = findViewById<ConstraintLayout>(R.id.fullLayout)
             layout?.addView(imageView)*/
 
-            val intent = Intent(this, ImagePopup::class.java)
-            val extras = Bundle()
-            extras.putString("image_link", _imageLink)
-            intent.putExtras(extras)
-            startActivity(intent)
+            if (type == "image") {
+                val intent = Intent(this, ImagePopup::class.java)
+                val extras = Bundle()
+                extras.putString("image_link", _imageLink)
+                intent.putExtras(extras)
+                startActivity(intent)
+            } else if (type == "video")
+            {
+                val intent = Intent(this, VideoPopupActivity::class.java)
+                val extras = Bundle()
+                extras.putString("video_link", _imageLink)
+                intent.putExtras(extras)
+                startActivity(intent)
+            }
         }
 
         // setting layout_width and layout_height using layout parameters
@@ -117,16 +126,24 @@ class GalleryActivity : AppCompatActivity() {
 
                 val jsonObject = JSONTokener(result).nextValue() as JSONObject
 
-                val jsonArray = jsonObject.getJSONArray("Images")
+                var jsonArray = jsonObject.getJSONArray("Images")
 
                 for (i in 0 until jsonArray.length()) {
                     val fileName = jsonArray.getJSONObject(i).getString("Filename")
                     val fileType = jsonArray.getJSONObject(i).getString("Filetype")
-                    if (fileType == "video")
-                        continue  //TODO: ADD VIDEO SETTINGS TOO
                     val bitmapFileName = jsonArray.getJSONObject(i).getString("BitmapFilename")
                     //Log.d("infodebug", "http://$ipAddr/".plus(bitmapFileName))
-                    addItem("http://$ipAddr/".plus(bitmapFileName), "http://$ipAddr/".plus(fileName))
+                    addItem("http://$ipAddr/".plus(bitmapFileName), "http://$ipAddr/".plus(fileName), fileType)
+                }
+
+                jsonArray = jsonObject.getJSONArray("Videos")
+
+                for (i in 0 until jsonArray.length()) {
+                    val fileName = jsonArray.getJSONObject(i).getString("Filename")
+                    val fileType = jsonArray.getJSONObject(i).getString("Filetype")
+                    val bitmapFileName = jsonArray.getJSONObject(i).getString("BitmapFilename")
+                    //Log.d("infodebug", "http://$ipAddr/".plus(bitmapFileName))
+                    addItem("http://$ipAddr/".plus(bitmapFileName), "http://$ipAddr/".plus(fileName), fileType)
                 }
 
             } catch (e: Exception) {

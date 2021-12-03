@@ -31,8 +31,8 @@ import kotlinx.coroutines.*
 
 
 class CameraActivity : AppCompatActivity() {
-    //final val ipAddr = "192.168.1.102" //benim pc wifi
-    final val ipAddr = "18.116.82.71" //sunucu aws windows
+    final val ipAddr = "192.168.1.101" //benim pc wifi
+    //final val ipAddr = "18.116.82.71" //sunucu aws windows
 
     lateinit var photographer: Photographer
     lateinit var photographerHelper: PhotographerHelper
@@ -189,7 +189,7 @@ class CameraActivity : AppCompatActivity() {
             try {
                 withContext(Dispatchers.Default) {
                     val dataObject = JSONObject()
-                    dataObject.put("Name", "Deniz")
+                    dataObject.put("Name", username)
 
                     try {
                         val client = HttpClient()

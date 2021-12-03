@@ -19,6 +19,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TaliaDrive_w_Cam_Kit">
         <activity
+            android:name=".VideoPopupActivity"
+            android:exported="false" />
+        <activity
             android:name=".ImagePopup"
             android:exported="false" />
         <activity

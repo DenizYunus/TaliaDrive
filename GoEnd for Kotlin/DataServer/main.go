@@ -22,44 +22,66 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/nfnt/resize"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var sizesSlice []int
 
 func uploadVideoFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Video Upload Endpoint Hit")
-	r.ParseMultipartForm(10 << 20)
 
-	file, handler, err := r.FormFile("video")
+	var err error
+	if _, err := os.Stat("temp-videos/" + client.Name); os.IsNotExist(err) {
+		errr := os.Mkdir("temp-videos/"+client.Name, 0755)
+		if errr != nil {
+			fmt.Println(err)
+		}
+	}
 	if err != nil {
-		fmt.Println("Error Retrieving the File")
+		fmt.Println(err)
+	}
+
+	r.ParseMultipartForm(10 << 20)
+	var client Client
+
+	jsonDataToBeParsed := r.Form.Get("data")
+	var buf bytes.Buffer
+
+	err = json.Unmarshal([]byte(jsonDataToBeParsed), &client)
+	if err != nil {
+		//http.Error(w, err.Error(), http.StatusBadRequest)
 		fmt.Println(err)
 		return
 	}
+
+	file, handler, err := r.FormFile("video")
+	if err != nil {
+		panic(err)
+	}
 	defer file.Close()
+
+	io.Copy(&buf, file)
+
 	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
 	fmt.Printf("File Size: %+v\n", handler.Size)
 	fmt.Printf("MIME Header: %+v\n", handler.Header)
 
-	// Create a temporary file within our temp-images directory that follows
-	// a particular naming pattern
-	tempFile, err := ioutil.TempFile("temp-videos", "*"+handler.Filename)
+	tempFile, err := ioutil.TempFile("temp-videos\\\\"+client.Name+"\\\\", "*.tlv")
 	if err != nil {
-		fmt.Print("33")
 		fmt.Println(err)
 	}
-	//createdFileName := tempFile.Name()
+
 	defer tempFile.Close()
 
-	fileBytes, err := ioutil.ReadAll(file)
+	/*fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		fmt.Println(err)
-	}
-	// write this byte array to our temporary file
-	tempFile.Write(fileBytes)
-	// return that we have successfully uploaded our file!
+	}*/
 
-	//writeToFile(returnCurPath(), createdFileName)
+	tempFile.Write(buf.Bytes()) //fileBytes)
+
+	addToLib(client.Name, tempFile.Name(), "temp-videos////video_bitmap.jpg", "video")
+
 	a := append(sizesSlice, int(handler.Size))
 	_ = a
 
@@ -134,7 +156,18 @@ func uploadImageFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("File Size: %+v\n", cap(buf.Bytes()))
 
 	if len(buf.Bytes()) > 5 {
-		tempFile, err := ioutil.TempFile("temp-images\\\\", "*.jpeg") //+handler.Filename)
+
+		if _, err := os.Stat("temp-images/" + client.Name); os.IsNotExist(err) {
+			err = os.Mkdir("temp-images/"+client.Name, 0755)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		tempFile, err := ioutil.TempFile("temp-images\\\\"+client.Name+"\\\\", "*.tli") //+handler.Filename)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -151,7 +184,7 @@ func uploadImageFile(w http.ResponseWriter, r *http.Request) {
 
 		newImage := resize.Resize(64, 64, orig_image, resize.Lanczos3)
 
-		bitmapImage, _ := os.Create("temp-images\\\\Thumbnails\\\\" + tempFile.Name()[13:] + ".bmp")
+		bitmapImage, _ := os.Create("temp-images\\\\Thumbnails\\\\" + tempFile.Name()[13+len(client.Name)+4:len(tempFile.Name())-4] + ".tlb")
 		defer bitmapImage.Close()
 
 		jpeg.Encode(bitmapImage, newImage, &jpeg.Options{75})
@@ -170,9 +203,17 @@ func uploadImageFile(w http.ResponseWriter, r *http.Request) {
 
 type Gallery struct {
 	Images []ImageInGallery
+	Videos []VideoInGallery
 }
 
 type ImageInGallery struct {
+	Username       string
+	Filename       string
+	BitmapFilename string
+	Filetype       string
+}
+
+type VideoInGallery struct {
 	Username       string
 	Filename       string
 	BitmapFilename string
@@ -193,7 +234,10 @@ func getGallery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gallery := Gallery{getLib(client.Name)}
+	fmt.Printf(client.Name)
+	iiii := getImages(client.Name)
+	vvvv := getVideos(client.Name)
+	gallery := Gallery{iiii, vvvv}
 
 	b, err := json.Marshal(gallery)
 	if err != nil {
@@ -208,6 +252,8 @@ func setupRoutes() {
 	http.HandleFunc("/uploadImage", uploadImageFile)
 	//	http.HandleFunc("/endVideo", endedUpload)
 	http.HandleFunc("/getGallery", getGallery)
+	http.HandleFunc("/signup", signUpUser)
+	http.HandleFunc("/login", loginUser)
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -267,7 +313,7 @@ func addToLib(_username string, _filename string, _bitmap_filename string, _file
 	}
 }
 
-func getLib(_username string) []ImageInGallery {
+func getImages(_username string) []ImageInGallery {
 	var (
 		Username        string
 		Filename        string
@@ -275,7 +321,7 @@ func getLib(_username string) []ImageInGallery {
 		Type            string
 	)
 
-	rows, err := db.Query("select Username, Filename, bitmap_filename, Type from filedata where Username = ?", _username)
+	rows, err := db.Query("select Username, Filename, bitmap_filename, Type from filedata where Username = ? AND Type = 'image'", _username)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -298,4 +344,117 @@ func getLib(_username string) []ImageInGallery {
 		log.Fatal(err)
 	}
 	return images
+}
+
+func getVideos(_username string) []VideoInGallery {
+	var (
+		Username        string
+		Filename        string
+		bitmap_filename string
+		Type            string
+	)
+
+	rows, err := db.Query("select Username, Filename, bitmap_filename, Type from filedata where Username = ? AND type = 'video'", _username)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var videos []VideoInGallery
+
+	for rows.Next() {
+		err := rows.Scan(&Username, &Filename, &bitmap_filename, &Type)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		vig := VideoInGallery{_username, Filename, bitmap_filename, "video"}
+		videos = append(videos, vig)
+		// log.Println(Username, Filename, Type)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return videos
+}
+
+func signUpUser(res http.ResponseWriter, req *http.Request) {
+	if req.Method != "POST" {
+		http.ServeFile(res, req, "signup.html")
+		return
+	}
+
+	fmt.Println(req)
+	username := req.FormValue("username")
+	password := req.FormValue("password")
+
+	var user string
+
+	err := db.QueryRow("SELECT username FROM users WHERE username=?", username).Scan(&user)
+
+	switch {
+	case err == sql.ErrNoRows:
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		_ = hashedPassword
+
+		if err != nil {
+			//http.Error(res, "Server error, unable to create your account.", 500)
+			fmt.Printf("Server error, unable to create your account.")
+			return
+		}
+
+		_, err = db.Exec("INSERT INTO users(username, password) VALUES(?, ?)", username, password) //hashedPassword)
+		if err != nil {
+			//http.Error(res, "Server error, unable to create your account.", 500)
+			fmt.Printf("Server error, unable to create your account.")
+			return
+		}
+
+		fmt.Printf("success")
+		res.Write([]byte("success"))
+		return
+	case err != nil:
+		//http.Error(res, "Server error, unable to create your account.", 500)
+		fmt.Printf("Server error, unable to create your account.")
+		return
+	default:
+		fmt.Printf("Returned default")
+		return
+		//http.Redirect(res, req, "/", 301)
+	}
+}
+
+func loginUser(res http.ResponseWriter, req *http.Request) {
+	if req.Method != "POST" {
+		http.ServeFile(res, req, "login.html")
+		return
+	}
+
+	username := req.FormValue("username")
+	password := req.FormValue("password")
+
+	var databaseUsername string
+	var databasePassword string
+
+	err := db.QueryRow("SELECT username, password FROM users WHERE username=?", username).Scan(&databaseUsername, &databasePassword)
+
+	if err != nil {
+		//http.Redirect(res, req, "/login", 301)
+		res.Write([]byte("db fail"))
+		return
+	}
+
+	/*err = bcrypt.CompareHashAndPassword([]byte(databasePassword), []byte(password))
+	if err != nil {
+		//http.Redirect(res, req, "/login", 301)
+		res.Write([]byte("wrong password"))
+		return
+	}*/
+	if databasePassword == password {
+		res.Write([]byte("success"))
+	} else {
+		res.Write([]byte("wrong password"))
+	}
+
 }
