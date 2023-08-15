@@ -1,7 +1,16 @@
-# CameraFeed
-Xamarin Forms Live Camera Feed Page Android Custom Renderer
+#Project Title: Online Photo & Video Storage [DISCONTINUED]
+##Overview
+This project was an initiative aimed at developing a platform for taking photographs and videos through a mobile device and storing them directly on online storage.
 
-Implementation of a custom renderer for creating a live camera preview using Android Camera2 API. The default sample provided
-by Microsoft uses the deprecated Camera1 API which is known to suffer from performance issues.
+##Features
+###Gallery Integration
+-The gallery was designed to fetch photos directly from the backend server.
+-No files were stored on the mobile device, ensuring space efficiency.
+###Video Handling
+-Videos were supported, in addition to photos.
+-Implementation included splitting videos into chunks as they were being recorded.
+-Only 5 seconds of chunks were temporarily stored on the device, enabling unlimited video storage.
+##Current Status
+The project was being developed in two different languages for mobile. It has been discontinued as per the owner's request.
 
-## Implementations for iOS and UWP custom renders coming soon
+##Note: There's potential to continue the development and implementation of remaining functions in the future.
